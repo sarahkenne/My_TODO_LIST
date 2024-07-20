@@ -2,13 +2,16 @@
   "name": "my_todo_list",
   "version": "1.0.0",
   "description": "",
-  "main": "script.js",
+  "main": "app/script.js",
   "scripts": {
     "test": "jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
   "devDependencies": {
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
