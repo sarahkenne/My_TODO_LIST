@@ -1,3 +1,6 @@
+// script.js
+const { addTask } = require('./todo');
+
 document.addEventListener('DOMContentLoaded', () => {
     const addTaskButton = document.getElementById('add-task');
     const newTaskInput = document.getElementById('new-task');
@@ -6,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     addTaskButton.addEventListener('click', () => {
         const taskText = newTaskInput.value.trim();
         if (taskText !== '') {
-            addTask(taskText);
+            addTask(taskList, taskText);
             newTaskInput.value = '';
         }
     });
@@ -16,18 +19,4 @@ document.addEventListener('DOMContentLoaded', () => {
             addTaskButton.click();
         }
     });
-
-    function addTask(taskText) {
-        const li = document.createElement('li');
-        li.textContent = taskText;
-
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Supprimer';
-        deleteButton.addEventListener('click', () => {
-            taskList.removeChild(li);
-        });
-
-        li.appendChild(deleteButton);
-        taskList.appendChild(li);
-    }
 });
