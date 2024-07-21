@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - master
+
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -14,45 +16,30 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20'  
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
 
+      - name: Fix Jest permissions
+        run: chmod +x ./node_modules/.bin/jest
+
       - name: Run tests
-        run: npm test
+        run: npx jest
 
   build-and-push:
     runs-on: ubuntu-latest
     needs: test
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Log in to Docker Hub
-        env:
-          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
-        run: echo "${{ env.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ env.DOCKER_HUB_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
       - name: Build Docker image
-        run: docker build -t carinetemgoua/my_todo_list_nginx .
+        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list .
 
       - name: Push Docker image
-        run: docker push carinetemgoua/my_todo_list_nginx
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    steps:
-      - name: SSH and deploy
-        uses: appleboy/ssh-action@v0.1.0
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USERNAME }}
-          password: ${{ secrets.DEPLOY_PASSWORD }} # Vous pouvez utiliser des clés SSH pour une sécurité accrue
-          script: |
-            docker pull carinetemgoua/my_todo_list_nginx
-            docker stop my_todo_list_nginx || true
-            docker rm my_todo_list_nginx || true
-            docker run -d --name my_todo_list_nginx -p 80:80 carinetemgoua/my_todo_list_nginx
+        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list

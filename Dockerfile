@@ -15,3 +15,5 @@ EXPOSE 80
 
 # Lancer Nginx en mode premier plan
 CMD ["nginx", "-g", "daemon off;"]
+
+
