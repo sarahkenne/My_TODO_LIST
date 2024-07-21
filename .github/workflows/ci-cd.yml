@@ -27,7 +27,7 @@ jobs:
       - name: Run tests
         run: npx jest
 
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
     needs: test
 
@@ -35,11 +35,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list .
+        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list:latest .
 
       - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list
+        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      - name: Pull Docker image
+        run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list:latest
+
+      - name: Deploy to Server
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_KEY: ${{ secrets.SERVER_KEY }}
+        run: |
+          ssh -i $SERVER_KEY $SERVER_USER@$SERVER_IP << 'EOF'
+          docker stop my_todo_list || true
+          docker rm my_todo_list || true
+          docker run -d --name my_todo_list -p 80:80 ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list:latest
+          EOF
