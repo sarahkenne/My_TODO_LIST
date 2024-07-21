@@ -65,13 +65,18 @@ jobs:
       - name: Pull Docker image
         run: docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list:latest
 
+      - name: Setup SSH
+        run: |
+          echo "${{ secrets.SERVER_KEY }}" > /tmp/id_rsa
+          chmod 600 /tmp/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
       - name: Deploy to Server
         env:
           SERVER_IP: ${{ secrets.SERVER_IP }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_KEY: ${{ secrets.SERVER_KEY }}
         run: |
-          ssh -i $SERVER_KEY $SERVER_USER@$SERVER_IP << 'EOF'
+          ssh -i /tmp/id_rsa $SERVER_USER@$SERVER_IP << 'EOF'
           docker stop my_todo_list || true
           docker rm my_todo_list || true
           docker run -d --name my_todo_list -p 80:80 ${{ secrets.DOCKER_HUB_USERNAME }}/my_todo_list:latest
