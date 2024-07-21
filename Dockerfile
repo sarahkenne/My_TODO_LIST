@@ -1,23 +1,17 @@
-# Utiliser l'image officielle de Node.js
-FROM node:alpine
+# Utiliser l'image officielle de Nginx
+FROM nginx:alpine
 
-# Définir le répertoire de travail dans le conteneur
-WORKDIR /app
+# Supprimer le contenu par défaut de Nginx
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Copier package.json et package-lock.json
-COPY package.json ./
-COPY jest.config.js ./
+# Copier votre fichier de configuration Nginx personnalisé
+COPY nginx.conf /etc/nginx/conf.d/
 
-# Installer les dépendances
-RUN npm install
-
-# Copier le reste de l'application et les tests
-COPY app ./app
-COPY test ./test
-COPY server.js ./
+# Copier les fichiers statiques dans le répertoire approprié pour Nginx
+COPY app /usr/share/nginx/html
 
 # Exposer le port 80
 EXPOSE 80
 
-# Démarrer l'application
-CMD ["node", "server.js"]
+# Lancer Nginx en mode premier plan
+CMD ["nginx", "-g", "daemon off;"]
